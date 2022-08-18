@@ -13,6 +13,27 @@ var leaderRouter = require('./routes/leaderRouter');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 
+function auth(req, res, next) {
+  console.log(req.headers);
+  let authHeader = req.headers.authorization;
+  if (!authHeader) {
+    let err = new Error('You are not authenticated!');
+    err.status = 401;
+    return next(err);
+  }
+
+  let auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  let user = auth[0];
+  let pass = auth[1];
+  console.log(auth)
+  if (user === 'admin' && pass === 'admin') next();
+  else {
+    let err = new Error('You are not authenticated!');
+    err.status = 401;
+    return next(err);
+  }
+}
+
 const url = 'mongodb://localhost:27017/conFusion';
 
 mongoose.connect(url).then(() => {
@@ -22,6 +43,8 @@ mongoose.connect(url).then(() => {
 })
 
 var app = express();
+
+app.use(auth);
 
 app.use(bodyParser.json());
 
