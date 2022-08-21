@@ -12,39 +12,10 @@ var leaderRouter = require('./routes/leaderRouter');
 
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-
-function auth(req, res, next) {
-  console.log(req.headers);
-  let authHeader = req.headers.authorization;
-  if (!authHeader) {
-    let err = new Error('You are not authenticated!');
-    err.status = 401;
-    return next(err);
-  }
-
-  let auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-  let user = auth[0];
-  let pass = auth[1];
-  console.log(auth)
-  if (user === 'admin' && pass === 'admin') next();
-  else {
-    let err = new Error('You are not authenticated!');
-    err.status = 401;
-    return next(err);
-  }
-}
-
-const url = 'mongodb://localhost:27017/conFusion';
-
-mongoose.connect(url).then(() => {
-  console.log('Successfully connected to the database');
-}).catch(err => {
-  console.log(err.message);
-})
+const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 
 var app = express();
-
-app.use(auth);
 
 app.use(bodyParser.json());
 
@@ -55,7 +26,74 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+// app.use(cookieParser('12345-qwertyuiop'));
+
+app.use(session({
+  name: 'session-id',
+  secret: '12345-qwertyuiop',
+  resave: false,
+  saveUninitialized: false,
+  store: new FileStore(),
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 60
+    // or
+    // maxAge: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
+  }
+}))
+
+function auth(req, res, next) {
+  console.log('req.session:', req.session)
+
+  if (!req.session.user) {
+    let authHeader = req.headers.authorization;
+    console.log(authHeader);
+
+    if (!authHeader) {
+      res.setHeader('WWW-Authenticate', 'Basic');
+      let error = new Error('You are not authenticated!');
+      error.status = 401;
+      next(error);
+      return;
+    }
+
+    let auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+    let user = auth[0];
+    let pass = auth[1];
+
+    if (user === 'admin' && pass === 'admin') {
+      // res.cookie('user', 'admin', {
+      //   signed : true
+      // });
+      req.session.user = 'admin';
+      next();
+    } else {
+      res.setHeader('WWW-Authenticate', 'Basic');
+      let error = new Error('You are not authenticated!');
+      error.status = 401;
+      next(error);
+    }
+  } else {
+    if (req.session.user === 'admin') {
+      next();
+    } else {
+      let error = new Error('You are not authenticated!');
+      error.setHeader('WWW-Authenticate', 'Basic');
+      error.status = 401;
+      next(error);
+    }
+  }
+}
+
+app.use(auth);
+
+const url = 'mongodb://localhost:27017/conFusion';
+
+mongoose.connect(url).then(() => {
+  console.log('Successfully connected to the database');
+}).catch(err => {
+  console.log(err.message);
+})
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
