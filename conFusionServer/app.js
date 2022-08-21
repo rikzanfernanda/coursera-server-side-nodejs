@@ -41,45 +41,23 @@ app.use(session({
   }
 }))
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 function auth(req, res, next) {
   console.log('req.session:', req.session)
 
   if (!req.session.user) {
-    let authHeader = req.headers.authorization;
-    console.log(authHeader);
-
-    if (!authHeader) {
-      res.setHeader('WWW-Authenticate', 'Basic');
-      let error = new Error('You are not authenticated!');
-      error.status = 401;
-      next(error);
-      return;
-    }
-
-    let auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    let user = auth[0];
-    let pass = auth[1];
-
-    if (user === 'admin' && pass === 'admin') {
-      // res.cookie('user', 'admin', {
-      //   signed : true
-      // });
-      req.session.user = 'admin';
-      next();
-    } else {
-      res.setHeader('WWW-Authenticate', 'Basic');
-      let error = new Error('You are not authenticated!');
-      error.status = 401;
-      next(error);
-    }
+    let err = new Error('You are not authenticated!');
+    err.status = 403;
+    return next();
   } else {
-    if (req.session.user === 'admin') {
+    if (req.session.user === 'authenticated') {
       next();
     } else {
-      let error = new Error('You are not authenticated!');
-      error.setHeader('WWW-Authenticate', 'Basic');
-      error.status = 401;
-      next(error);
+      let err = new Error('You are not authenticated!');
+      err.status = 403;
+      return next(err);
     }
   }
 }
@@ -95,9 +73,6 @@ mongoose.connect(url).then(() => {
 })
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);
