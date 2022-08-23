@@ -1,5 +1,5 @@
 const express = require('express')
-const Dishes = require('../model/dishes')
+const Dishes = require('../models/dishes')
 
 const dishRouter = express.Router()
 

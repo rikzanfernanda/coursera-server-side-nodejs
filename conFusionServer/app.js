@@ -14,6 +14,8 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
+const passport = require('passport');
+const authenticate = require('./authenticate');
 
 var app = express();
 
@@ -40,6 +42,9 @@ app.use(session({
     // maxAge: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
   }
 }))
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
