@@ -6,7 +6,7 @@ const dishRouter = express.Router()
 
 dishRouter.get('/', async (req, res, next) => {
     try {
-        const dishes = await Dishes.find({})
+        const dishes = await Dishes.find({}).populate('comments.author')
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json')
         res.json(dishes)
@@ -52,7 +52,7 @@ dishRouter.delete('/', authenticate.verifyUser, async (req, res, next) => {
 
 dishRouter.get('/:dishId', authenticate.verifyUser, async (req, res, next) => {
     try {
-        const dish = await Dishes.findById(req.params.dishId)
+        const dish = await Dishes.findById(req.params.dishId).populate('comments.author')
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json')
         res.json(dish)
@@ -110,7 +110,7 @@ dishRouter.delete('/:dishId', authenticate.verifyUser, async (req, res, next) =>
 dishRouter.route('/:dishId/comments')
     .get(authenticate.verifyUser, async (req, res, next) => {
         try {
-            const dish = await Dishes.findById(req.params.dishId)
+            const dish = await Dishes.findById(req.params.dishId).populate('comments.author')
 
             if (dish === null) {
                 let err = new Error('data not found')
@@ -129,19 +129,21 @@ dishRouter.route('/:dishId/comments')
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
-            // ini tidak kepakai, why?
-            // if (dish === null) {
-            //     let err = new Error('data not found')
-            //     err.status = 404
-            //     return next(err)
-            // }
+            if (dish === null) {
+                let err = new Error('data not found')
+                err.status = 404
+                return next(err)
+            }
 
+            req.body.author = req.user._id
             dish.comments.push(req.body)
-            const newComment = await dish.save()
+            await dish.save()
+
+            let findDish = await Dishes.findById(dish._id).populate('comments.author')
 
             res.statusCode = 201
             res.setHeader('Content-Type', 'application/json')
-            res.json(newComment)
+            res.json(findDish)
         } catch (error) {
             return next(error)
         }
@@ -150,7 +152,7 @@ dishRouter.route('/:dishId/comments')
 dishRouter.route('/:dishId/comments/:commentId')
     .get(authenticate.verifyUser, async (req, res, next) => {
         try {
-            const dish = await Dishes.findById(req.params.dishId)
+            const dish = await Dishes.findById(req.params.dishId).populate('comments.author')
 
             // tidak kepakai
             // if (dish === null) {
@@ -186,10 +188,11 @@ dishRouter.route('/:dishId/comments/:commentId')
             if (req.body.comment) dish.comments.id(req.params.commentId).comment = req.body.comment
             if (req.body.author) dish.comments.id(req.params.commentId).author = req.body.author
 
-            const result = await dish.save()
+            await dish.save()
+            const findDish = await Dishes.findById(dish._id).populate('comments.author')
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
-            res.json(result)
+            res.json(findDish)
         } catch (error) {
             return next(error)
         }
@@ -205,10 +208,11 @@ dishRouter.route('/:dishId/comments/:commentId')
             }
 
             dish.comments.id(req.params.commentId).remove()
-            const result = await dish.save()
+            await dish.save()
+            const findDish = await Dishes.findById(dish._id).populate('comments.author')
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
-            res.json(result)
+            res.json(findDish)
         } catch (error) {
             return next(error)
         }

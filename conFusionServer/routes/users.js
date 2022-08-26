@@ -14,29 +14,38 @@ router.post('/signup', (req, res, next) => {
     username: req.body.username
   })
 
-  User.register(user, req.body.password, (err, user) => {
-    // console.log('err:', err)
-    // console.log('user:', user)
-    if (err) {
-      res.statusCode = 500
-      res.setHeader('Content-Type', 'application/json')
-      res.json({
-        error: err
-      })
-    } else {
-      passport.authenticate('local')(req, res, () => {
-        res.statusCode = 200
+  User.register(user, req.body.password, async (err, user, next) => {
+    try {
+      // console.log('err:', err)
+      // console.log('user:', user)
+      if (err) {
+        res.statusCode = 500
         res.setHeader('Content-Type', 'application/json')
         res.json({
-          success: true,
-          message: 'Registration Successful!',
-          user: {
-            '_id': user._id, // using '_id', instead of _id
-            'username': user.username,
-            'admin': user.admin
-          }
+          error: err
         })
-      })
+      } else {
+        if (req.body.firstname) user.firstname = req.body.firstname
+        if (req.body.lastname) user.lastname = req.body.lastname
+        await user.save()
+        passport.authenticate('local')(req, res, () => {
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'application/json')
+          res.json({
+            success: true,
+            message: 'Registration Successful!',
+            user: {
+              '_id': user._id, // using '_id', instead of _id
+              'username': user.username,
+              'admin': user.admin
+            }
+          })
+        })
+      }
+    } catch (error) {
+      let err = new Error('Error creating user')
+      err.status = 500
+      next(err)
     }
   })
 })
