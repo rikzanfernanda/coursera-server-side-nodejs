@@ -19,6 +19,15 @@ const authenticate = require('./authenticate');
 
 var app = express();
 
+// secure traffic only
+app.all('*', (req, res, next) => {
+  if (req.secure) {
+    return next();
+  } else {
+    res.redirect(307, `https://${req.hostname}:${app.get('secPort')}${req.url}`)
+  }
+})
+
 app.use(bodyParser.json());
 
 // view engine setup
@@ -50,7 +59,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 function auth(req, res, next) {
-  console.log('req.session:', req.session)
+  // console.log('req.session:', req.session)
 
   if (!req.session.user) {
     let err = new Error('You are not authenticated!');
