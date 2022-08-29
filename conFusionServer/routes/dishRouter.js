@@ -1,39 +1,46 @@
 const express = require('express')
 const Dishes = require('../models/dishes')
 const auth = require('../authenticate')
+const cors = require('./cors')
+
+// note:
+/*
+cors not working
+*/
 
 const dishRouter = express.Router()
 
-dishRouter.get('/', async (req, res, next) => {
-    try {
-        const dishes = await Dishes.find({})
-        res.statusCode = 200
-        res.setHeader('Content-Type', 'application/json')
-        res.json(dishes)
-    } catch (error) {
-        // res.statusCode = 500
-        // res.json({ error: err.message })
-        // or
-        return next(error)
-    }
-})
+dishRouter.route('/')
+    .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200) })
+    .get(cors.cors, async (req, res, next) => {
+        try {
+            const dishes = await Dishes.find({})
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'application/json')
+            res.json(dishes)
+        } catch (error) {
+            // res.statusCode = 500
+            // res.json({ error: err.message })
+            // or
+            return next(error)
+        }
+    })
+    .post(cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
+        try {
+            const dish = new Dishes(req.body)
+            const result = await dish.save()
+            res.statusCode = 201
+            res.setHeader('Content-Type', 'application/json')
+            res.json(result)
+        } catch (error) {
+            // res.statusCode = 500
+            // res.json({ error: error.message })
+            // or
+            return next(error)
+        }
+    })
 
-dishRouter.post('/', auth.verifyUser, async (req, res, next) => {
-    try {
-        const dish = new Dishes(req.body)
-        const result = await dish.save()
-        res.statusCode = 201
-        res.setHeader('Content-Type', 'application/json')
-        res.json(result)
-    } catch (error) {
-        // res.statusCode = 500
-        // res.json({ error: error.message })
-        // or
-        return next(error)
-    }
-})
-
-dishRouter.delete('/', auth.verifyUser, async (req, res, next) => {
+dishRouter.delete('/', cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.deleteMany({})
         console.log(result)
@@ -50,7 +57,7 @@ dishRouter.delete('/', auth.verifyUser, async (req, res, next) => {
     }
 })
 
-dishRouter.get('/:dishId', async (req, res, next) => {
+dishRouter.get('/:dishId', cors.cors, async (req, res, next) => {
     try {
         const dish = await Dishes.findById(req.params.dishId)
         res.statusCode = 200
@@ -63,12 +70,12 @@ dishRouter.get('/:dishId', async (req, res, next) => {
     }
 })
 
-dishRouter.post('/:dishId', (req, res) => {
+dishRouter.post('/:dishId', cors.corsWithOptions, (req, res) => {
     res.statusCode = 403
     res.end('POST operation not supported on /dishes/' + req.params.dishId)
 })
 
-dishRouter.put('/:dishId', auth.verifyUser, async (req, res, next) => {
+dishRouter.put('/:dishId', cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.findByIdAndUpdate(req.params.dishId, {
             $set: req.body
@@ -83,7 +90,7 @@ dishRouter.put('/:dishId', auth.verifyUser, async (req, res, next) => {
     }
 })
 
-dishRouter.delete('/:dishId', auth.verifyUser, async (req, res, next) => {
+dishRouter.delete('/:dishId', cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.findByIdAndRemove(req.params.dishId)
         res.setHeader('Content-Type', 'application/json')
@@ -108,7 +115,7 @@ dishRouter.delete('/:dishId', auth.verifyUser, async (req, res, next) => {
 
 // handling comments
 dishRouter.route('/:dishId/comments')
-    .get(async (req, res, next) => {
+    .get(cors.cors, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -125,7 +132,7 @@ dishRouter.route('/:dishId/comments')
             return next(error)
         }
     })
-    .post(auth.verifyUser, async (req, res, next) => {
+    .post(cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -148,7 +155,7 @@ dishRouter.route('/:dishId/comments')
     })
 
 dishRouter.route('/:dishId/comments/:commentId')
-    .get(async (req, res, next) => {
+    .get(cors.cors, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -172,7 +179,7 @@ dishRouter.route('/:dishId/comments/:commentId')
             return next(error)
         }
     })
-    .put(auth.verifyUser, async (req, res, next) => {
+    .put(cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -194,7 +201,7 @@ dishRouter.route('/:dishId/comments/:commentId')
             return next(error)
         }
     })
-    .delete(auth.verifyUser, async (req, res, next) => {
+    .delete(cors.corsWithOptions, auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 

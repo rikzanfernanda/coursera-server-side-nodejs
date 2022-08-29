@@ -1,12 +1,13 @@
 const express = require('express');
 const passport = require('passport');
 const auth = require('../authenticate');
+const cors = require('./cors');
 
 var router = express.Router();
 let User = require('../models/user');
 
 /* GET users listing. */
-router.get('/', function (req, res, next) {
+router.get('/', cors.cors, function (req, res, next) {
   res.send('respond with a resource');
 });
 
@@ -41,7 +42,7 @@ router.get('/', function (req, res, next) {
 // })
 
 // using passport
-router.post('/signup', (req, res, next) => {
+router.post('/signup', cors.cors, (req, res, next) => {
   let user = new User({
     username: req.body.username
   })
@@ -125,7 +126,7 @@ router.post('/signup', (req, res, next) => {
 // using passport
 // there is a problem with login, sometimes login is not working, but the user is authenticated
 // there is a relationship with the text file in the sessions folder, the text file is not being deleted
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.cors, passport.authenticate('local'), (req, res) => {
   // console.log('cek: ', req.user.username)
   let token = auth.getToken({
     '_id': req.user._id,

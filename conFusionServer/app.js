@@ -17,17 +17,26 @@ const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const passport = require('passport');
 const authenticate = require('./authenticate');
+const cors = require('./routes/cors');
 
 var app = express();
 
+// its also work for general
+// app.all('/*', (req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*')
+//   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+//   next()
+// })
+
 // secure traffic only
-app.all('*', (req, res, next) => {
-  if (req.secure) {
-    return next();
-  } else {
-    res.redirect(307, `https://${req.hostname}:${app.get('secPort')}${req.url}`)
-  }
-})
+// this setting must be commented to using cors.js
+// app.all('*', (req, res, next) => {
+//   if (req.secure) {
+//     return next();
+//   } else {
+//     res.redirect(307, `https://${req.hostname}:${app.get('secPort')}${req.url}`)
+//   }
+// })
 
 app.use(bodyParser.json());
 
