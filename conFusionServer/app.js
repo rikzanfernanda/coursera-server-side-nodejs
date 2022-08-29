@@ -45,39 +45,36 @@ app.use(session({
   secret: '12345-qwertyuiop',
   resave: false,
   saveUninitialized: false,
-  store: new FileStore(),
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 60
-    // or
-    // maxAge: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
-  }
+  // store: new FileStore(),
+  // cookie: {
+  //   maxAge: 1000 * 60 * 60 * 24 * 60
+  //   // or
+  //   // maxAge: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
+  // }
 }))
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// function auth(req, res, next) {
+//   // console.log('req.session:', req.session)
 
-function auth(req, res, next) {
-  // console.log('req.session:', req.session)
+//   if (!req.session.user) {
+//     let err = new Error('You are not authenticated!');
+//     err.status = 403;
+//     return next();
+//   } else {
+//     if (req.session.user === 'authenticated') {
+//       next();
+//     } else {
+//       let err = new Error('You are not authenticated!');
+//       err.status = 403;
+//       return next(err);
+//     }
+//   }
+// }
 
-  if (!req.session.user) {
-    let err = new Error('You are not authenticated!');
-    err.status = 403;
-    return next();
-  } else {
-    if (req.session.user === 'authenticated') {
-      next();
-    } else {
-      let err = new Error('You are not authenticated!');
-      err.status = 403;
-      return next(err);
-    }
-  }
-}
-
-app.use(auth);
+// app.use(auth);
 
 const url = 'mongodb://localhost:27017/conFusion';
 
@@ -87,7 +84,9 @@ mongoose.connect(url).then(() => {
   console.log(err.message);
 })
 
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 app.use('/dishes', dishRouter);
 app.use('/promotions', promoRouter);
 app.use('/leaders', leaderRouter);

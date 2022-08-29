@@ -1,5 +1,6 @@
 const express = require('express')
 const Dishes = require('../models/dishes')
+const auth = require('../authenticate')
 
 const dishRouter = express.Router()
 
@@ -17,7 +18,7 @@ dishRouter.get('/', async (req, res, next) => {
     }
 })
 
-dishRouter.post('/', async (req, res, next) => {
+dishRouter.post('/', auth.verifyUser, async (req, res, next) => {
     try {
         const dish = new Dishes(req.body)
         const result = await dish.save()
@@ -32,7 +33,7 @@ dishRouter.post('/', async (req, res, next) => {
     }
 })
 
-dishRouter.delete('/', async (req, res, next) => {
+dishRouter.delete('/', auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.deleteMany({})
         console.log(result)
@@ -67,7 +68,7 @@ dishRouter.post('/:dishId', (req, res) => {
     res.end('POST operation not supported on /dishes/' + req.params.dishId)
 })
 
-dishRouter.put('/:dishId', async (req, res, next) => {
+dishRouter.put('/:dishId', auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.findByIdAndUpdate(req.params.dishId, {
             $set: req.body
@@ -82,7 +83,7 @@ dishRouter.put('/:dishId', async (req, res, next) => {
     }
 })
 
-dishRouter.delete('/:dishId', async (req, res, next) => {
+dishRouter.delete('/:dishId', auth.verifyUser, async (req, res, next) => {
     try {
         const result = await Dishes.findByIdAndRemove(req.params.dishId)
         res.setHeader('Content-Type', 'application/json')
@@ -124,7 +125,7 @@ dishRouter.route('/:dishId/comments')
             return next(error)
         }
     })
-    .post(async (req, res, next) => {
+    .post(auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -171,7 +172,7 @@ dishRouter.route('/:dishId/comments/:commentId')
             return next(error)
         }
     })
-    .put(async (req, res, next) => {
+    .put(auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 
@@ -193,7 +194,7 @@ dishRouter.route('/:dishId/comments/:commentId')
             return next(error)
         }
     })
-    .delete(async (req, res, next) => {
+    .delete(auth.verifyUser, async (req, res, next) => {
         try {
             const dish = await Dishes.findById(req.params.dishId)
 

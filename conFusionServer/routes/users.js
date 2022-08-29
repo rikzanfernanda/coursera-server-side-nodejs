@@ -1,5 +1,7 @@
-var express = require('express');
+const express = require('express');
 const passport = require('passport');
+const auth = require('../authenticate');
+
 var router = express.Router();
 let User = require('../models/user');
 
@@ -124,12 +126,17 @@ router.post('/signup', (req, res, next) => {
 // there is a problem with login, sometimes login is not working, but the user is authenticated
 // there is a relationship with the text file in the sessions folder, the text file is not being deleted
 router.post('/login', passport.authenticate('local'), (req, res) => {
-  console.log('cek: ', req.user.username)
+  // console.log('cek: ', req.user.username)
+  let token = auth.getToken({
+    '_id': req.user._id,
+    'username': req.user.username
+  })
   res.statusCode = 200
   res.setHeader('Content-Type', 'application/json')
   res.json({
     success: true,
     message: 'Login Successful!',
+    token: token,
     user: {
       '_id': req.user._id,
       'username': req.user.username,
