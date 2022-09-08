@@ -166,4 +166,27 @@ router.get('/logout', async (req, res, next) => {
   }
 })
 
+// facebook get token
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  if (req.user) {
+    let token = auth.getToken({
+      '_id': req.user._id,
+      'username' : req.user.username
+    })
+
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'application/json')
+    res.json({
+      success: true,
+      token: token,
+      message: 'You are successfully logged in!',
+      user: {
+        '_id': req.user._id,
+        'username': req.user.username,
+        'admin': req.user.admin
+      }
+    })
+  }
+})
+
 module.exports = router;

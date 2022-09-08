@@ -3,7 +3,9 @@ const LocalStrategy = require('passport-local').Strategy
 const User = require('./models/user')
 const JwtStrategy = require('passport-jwt').Strategy
 const ExtractJwt = require('passport-jwt').ExtractJwt
-const jwt = require('jsonwebtoken')
+const FacebookTokenStrategy = require('passport-facebook-token');
+const jwt = require('jsonwebtoken');
+const config = require('./config');
 
 const secretKey = '12345-qwertyuiop-67890'
 
@@ -53,3 +55,32 @@ exports.verifyUser = (req, res, next) => {
         next()
     })(req, res, next)
 }
+
+exports.facebookPassport = passport.use(new FacebookTokenStrategy({
+    clientID: config.facebook.clientId,
+    clientSecret: config.facebook.clientSecret
+}, async (accessToken, refreshToken, profile, done) => {
+    console.log('accessToken:', accessToken)
+    console.log('refreshToken:', refreshToken)
+    console.log('profile:', profile)
+
+    try {
+        const user = await User.findOne({
+            facebookId: profile.id
+        })
+
+        if (user) return done(null, user)
+        else {
+            const newUser = new User();
+            newUser.username = profile.displayName
+            newUser.facebookId = profile.id
+            // user.firstname = profile.name.givenName
+            // user.lastname = profile.name.familyName
+
+            await newUser.save()
+            return done(null, newUser)
+        }
+    } catch (error) {
+        done(error, false)
+    }
+}))
