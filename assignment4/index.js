@@ -6,11 +6,20 @@ const database = require('@config/database')
 const userRoute = require('@routes/userRoute')
 const dishRoute = require('@routes/dishRoute')
 const favoriteRoute = require('@routes/favoriteRoute')
+const cors = require('cors')
 
 database()
 
 const app = express()
 const port = process.env.PORT || 3000
+
+app.use(cors({
+    origin: [
+        'http://localhost',
+        'https://www.google.com'
+    ]
+    // origin: '*'
+}))
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
