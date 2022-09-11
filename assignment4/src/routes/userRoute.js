@@ -23,7 +23,7 @@ router.get('/', auth.verifyUser, auth.verifyAdmin, async (req, res, next) => {
         res.statusCode = 200
         res.setHeader('Content-Type', 'application/json')
         res.json({
-            status: 'success',
+            success: true,
             data: users
         })
     } catch (error) {
