@@ -7,7 +7,7 @@ const router = express.Router()
 
 router.get('/', auth.verifyUser, auth.verifyAdmin, async (req, res, next) => {
     try {
-        let users = await User.find({})
+        let users = await User.find(req.query)
 
         users = users.map(user => {
             return {

@@ -24,7 +24,7 @@ const getDishById = (id) => {
 router.route('/')
     .get(async (req, res, next) => {
         try {
-            const dishes = await Dish.find({}).populate('comments.author')
+            const dishes = await Dish.find(req.query).populate('comments.author')
 
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
